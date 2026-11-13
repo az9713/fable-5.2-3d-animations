@@ -8,7 +8,7 @@ A library of 100 animation styles in 13 families, built only in code with three.
 
 ## Where the idea comes from
 
-The idea comes from this YouTube video: <https://www.youtube.com/watch?v=ZxaMmG71g8c&t=9s>. The video shows a three.js "style atlas" with sound design and a voiceover feature. This repository builds the same kind of tool with its own code, its own text and its own 100 styles. It copies no code, text, demo names or branding from the video.
+The idea comes from the YouTube video [Claude Makes 3D Animations Easy Now](https://www.youtube.com/watch?v=ZxaMmG71g8c&t=9s). The video shows a three.js "style atlas" with sound design and a voiceover feature. This repository builds the same kind of tool with its own code, its own text and its own 100 styles. It copies no code, text, demo names or branding from the video.
 
 ## Who made what
 
