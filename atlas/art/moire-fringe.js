@@ -3,8 +3,8 @@
 // lines of the two gratings interleave and light where they coincide. The fringes are level lines of depth: contour bands on each form.
 // The bands move when the depth of a surface changes (camera or object move). Depth is the distance from the camera, in units of the focus distance.
 window.ARTS = window.ARTS || {};
-ARTS['moir-fringe'] = {
-  id: 'moir-fringe', name: 'Moiré fringe', group: 'The depth is the material', inputs: 'D',
+ARTS['moire-fringe'] = {
+  id: 'moire-fringe', name: 'Moiré fringe', group: 'The depth is the material', inputs: 'D',
   post: {
     fragment: `
       float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
