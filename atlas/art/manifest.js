@@ -87,7 +87,7 @@ window.ART_LIST = [
   {"n":84,"id":"batik","name":"Batik","group":"World traditions","inputs":"C D","kind":"keep"},
   {"n":85,"id":"papel-picado","name":"Papel picado","group":"World traditions","inputs":"C D","kind":"keep"},
   {"n":86,"id":"blue-and-white-porcelain","name":"Blue-and-white porcelain","group":"World traditions","inputs":"C D","kind":"new"},
-  {"n":87,"id":"gold-lacquer","name":"Gold lacquer","group":"World traditions","inputs":"C N","kind":"new"},
+  {"n":87,"id":"gold-lacquer","name":"Gold lacquer","group":"World traditions","inputs":"C N W","kind":"new"},
   {"n":88,"id":"sand-mandala","name":"Sand mandala","group":"World traditions","inputs":"C B","kind":"new"},
   {"n":89,"id":"cave-wall-by-torchlight","name":"Cave wall by torchlight","group":"World traditions","inputs":"C D","kind":"new"},
   {"n":90,"id":"gold-leaf-folding-screen","name":"Gold-leaf folding screen","group":"World traditions","inputs":"C D","kind":"new"},
