@@ -25,7 +25,7 @@ ARTS['marquetry'] = {
       // index of the wood nearest to the colour c
       int species(vec3 c){
         int bi = 0; float bd = 1e9;
-        for (int i = 0; i < 10; i++) { vec3 dc = (c - lum(c)) - (wood(i) - lum(wood(i))); float s = 2.0 * dot(dc, dc) + 0.25 * pow(lum(c) - lum(wood(i)), 2.0); if (s < bd) { bd = s; bi = i; } }
+        for (int i = 0; i < 10; i++) { vec3 dc = (c - lum(c)) - (wood(i) - lum(wood(i))); float s = 2.0 * dot(dc, dc) + 0.25 * (lum(c) - lum(wood(i))) * (lum(c) - lum(wood(i))); if (s < bd) { bd = s; bi = i; } }
         return bi;
       }
       vec3 softCol(vec2 uv, vec2 px, float sc){

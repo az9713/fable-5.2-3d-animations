@@ -71,7 +71,7 @@ ARTS['cloisonne'] = {
         float s = dot(uv * vec2(uRes.x / uRes.y, 1.0), normalize(vec2(1.0, 0.55))) + 0.12 * (vn(f * 0.02) - 0.5);
         float span = 1.0 * uRes.x / uRes.y + 0.55 + 0.6;
         float pos = fract(uRealT / 5.5) * span - 0.3;
-        float band = exp(-pow((s - pos) / 0.11, 2.0));
+        float band = exp(-(((s - pos) / 0.11) * ((s - pos) / 0.11)));
         col += vec3(1.0, 0.95, 0.82) * band * (0.15 + 0.7 * dome) * (0.35 + 0.65 * smoothstep(0.1, 0.5, L));
         // gold wire
         float wi = 0.5 + 0.5 * vn(f * 0.7);

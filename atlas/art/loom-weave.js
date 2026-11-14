@@ -39,17 +39,17 @@ ARTS['loom-weave'] = {
         float woU = warpOver(ij + vec2(0.0, 1.0)), woD = warpOver(ij + vec2(0.0, -1.0));
         vec3 col;
         // weft strand (horizontal): cylinder across the row, dips under next to a warp-over cell, thin gap between rows
-        float cylY = sqrt(clamp(1.0 - pow(2.0 * q.y - 1.0, 2.0), 0.0, 1.0));
+        float cylY = sqrt(clamp(1.0 - ((2.0 * q.y - 1.0) * (2.0 * q.y - 1.0)), 0.0, 1.0));
         float dive = 1.0 - 0.45 * (woL * (1.0 - smoothstep(0.0, 0.35, q.x)) + woR * smoothstep(0.65, 1.0, q.x));
         float twist = 0.94 + 0.06 * sin((f.x * 1.1 + f.y * 0.6) * 1.7);
         vec3 weft = pc * (0.55 + 0.6 * cylY) * dive * twist * (1.0 - 0.5 * smoothstep(0.85, 1.0, abs(2.0 * q.y - 1.0)));
         // warp strand (vertical): cylinder across the column, dips under at the top and bottom
-        float cylX = sqrt(clamp(1.0 - pow(2.0 * q.x - 1.0, 2.0), 0.0, 1.0));
+        float cylX = sqrt(clamp(1.0 - ((2.0 * q.x - 1.0) * (2.0 * q.x - 1.0)), 0.0, 1.0));
         float diveW = 1.0 - 0.4 * ((1.0 - woU) * smoothstep(0.7, 1.0, q.y) + (1.0 - woD) * (1.0 - smoothstep(0.0, 0.3, q.y)));
         vec3 warp = warpC * (0.55 + 0.6 * cylX) * diveW * (0.95 + 0.05 * sin(f.y * 1.9 + ij.x));
         col = wo > 0.5 ? warp : weft;
         // bare warp (not woven yet): cream threads over the dark loom, each with a faint dye of the picture
-        float cylB = sqrt(clamp(1.0 - pow(2.0 * q.x - 1.0, 2.0), 0.0, 1.0));
+        float cylB = sqrt(clamp(1.0 - ((2.0 * q.x - 1.0) * (2.0 * q.x - 1.0)), 0.0, 1.0));
         vec3 bare = mix(vec3(0.03, 0.02, 0.015), mix(cream, pc, 0.45) * 0.17 * (0.5 + 0.55 * cylB) * (0.95 + 0.05 * sin(f.y * 1.9 + ij.x)), 1.0 - smoothstep(0.62, 0.8, abs(2.0 * q.x - 1.0)));
         col = mix(bare, col, woven);
         // light from the left shows every thread
