@@ -5,6 +5,28 @@ Owner: the repository owner. Windows 11, PowerShell and Git Bash.
 
 ## 0. Resume point (read first; verified 2026-11-13)
 
+### 0.1 Newest: plan for a second set of 100 art styles (session of 2026-11-13, Claude Opus 5.5; not started)
+
+The owner found that the 100 "styles" are not art styles in the usual sense (a way to draw, such as watercolor or paper cut). About 20 are art styles; about 80 are scenes, machines or metaphors (judgment, not a code field). Also, each style file mixes look and content (fixed beats, data, labels), so no style takes a new topic without a rewrite. The owner wants **100 art styles** as a second set next to the existing 100.
+
+- Plan: `art-styles-plan.html` (repo root). Idea: animation = scene + art style; an art style is a post shader + optional material change + palette + frame step, with no topic. Phases 0 to 5, a draft list of 100 in 10 groups, 4 open decisions with defaults.
+- Facts checked in that session: plan rows = style files = manifest ids = posters = 100 (0 differences). `kit/stage.js` has 355 lines; the post pass is at `stage.js:282-303`. 11 style files have a post shader; 89 set `post: null` (the kit has one post pass, so scene reuse must pick `post: null` scenes).
+- **Plan v2 (session of 2026-11-13, Claude Fable 5.2): `art-styles-plan-v2.html` (repo root). It replaces the draft list and extends the plan; the original file is kept unchanged on the owner's instruction. Read v2 first, then the original for the parts v2 does not repeat (its sections 1 and 2: scene + art style, scene options A/B).**
+  - Why: the owner asked for more imaginative styles. Review found that the original list had names only, many entries that give the same picture as a filter, one repeat of the first set (ukiyo-e = `woodblock`), and mostly flat filters.
+  - v2 rule: a style must do one or more of: the medium changes with time (beats); the marks follow the surface; the depth is the material; light or an instrument makes the picture.
+  - v2 list: 100 styles in 10 groups, each with a description and its inputs. 41 kept from the original (some merged or renamed), 59 new, 59 cut (v2 section 4). The page computes these counts from its own inline data array.
+  - v2 kit changes for Phase 1 (line counts are estimates): `W` world position from depth (4 users; 5 after the Phase 0 edit), `B` beat times as uniforms (20; now 22), `S` frame step (9; now 11), `M` material hook (3; now 5), `X` renders at other times (3: Event camera 49, Motion echoes 92, Long exposure 100; cost 2 to 16 scene renders per frame), and a separate label pass (all 100).
+  - v2 pilot: Paper-cut light box, Wet watercolor, Banknote engraving, Cel animation on 2 scenes; add Long exposure if decision 6 is approved.
+  - v2 states its own weak points: 8 rows with input `C` only (first to drop) and 3 pairs with one mechanism (22/23, 31/38, 36/79).
+  - **Not verified: no shader was written and no style was rendered. Each "Inputs" value is an expectation from reading `stage.js:225-355`.** The page script was run in Node with a stub `document` (100 rows, 10 tables); the page was not opened in a browser.
+- **Phase 0 done (2026-11-13, Claude Opus 5.5).** Owner's answers, recorded in section 7 of `art-styles-plan-v2.html`: 1 overlap = **make new versions** (not the default); 2 = scenes A after the 2-scene test; 3 = generic names only; 4 = **5 subagents approved** for Phase 3; 5 = approve `W B S M` + label pass; 6 = approve `X`, stop if live play < 15 fps; 7 = keep Autostereogram with a card note. List edit (owner chose "cut the 8 C-only rows + 7 weak rows"): 15 rows replaced in place by 15 `ver` rows (art-style versions of first-set styles), so the other 85 numbers do not change. Table in v2 section 4b. The 7 extra cuts and the 15 picks are agent judgment, shown to the owner.
+  - Counts now (computed by the page script in Node, stub `document`): 100 rows, 35 keep / 50 new / 15 ver; input users B 22, C 68, D 67, M 5, N 28, S 11, W 5, X 3. No row has input `C` only. 46 number references in the prose checked against the list: 0 mismatches. Page not opened in a browser.
+- **Next task:** Phase 1 pilot, 5 art styles on 2 scenes: Paper-cut light box (21), Wet watercolor (1), Banknote engraving (11), Cel animation (51), Long exposure (100). Kit changes `W B S M X` + label pass in `atlas/kit/stage.js`. Stop for the owner's review after the pilot.
+- Git: `art-styles-plan.html`, `art-styles-plan-v2.html` and `.impeccable/` are **untracked**, and this file is modified (not committed, not pushed). Local HEAD = remote HEAD = `35c5ef1`. The repo is public on GitHub Pages, so a commit publishes them. `.impeccable/config.json` holds one design-check ignore (`aphoristic-cadence`, this file only; reason: ASD-STE100 short sentences; agent decision, not owner-confirmed). Ask the owner before you commit them, or add them to `.gitignore`.
+- The plan HTML had one error during its session (a wrong "1 of 100 uses post" count from a bad grep); it is fixed in the file.
+
+### 0.2 Atlas (first set of 100)
+
 **Status: all phases done.** Sections 1 to 12 are the design spec (written by Claude Fable 5.2, session `fa936852`). Section 13 is the build log (Claude Opus 5.5, session `037ffe74`). There is no `CLAUDE.md` in this project; the owner's global rules apply.
 
 Current state:
@@ -14,7 +36,7 @@ Current state:
 - Kept out of git by `.gitignore`: `reference/` (video screenshots), `.ignore/` (session transcripts), `README.txt` (owner notes). Do not publish them. The owner's name was replaced by "the owner" in this file.
 - Last fix: `atlas/index.html` line 33 `.pv .ph[hidden] { display:none; }`. Before it, the placeholder covered every poster.
 
-Next task (none is open; do only what the owner asks). Possible items:
+Open items for the first set (none is required; the main next task is in 0.1). Possible items:
 - The owner checks **Record WebM** in a normal foreground browser (not yet tested).
 - Optional: read `pass/26.jpg`–`34.jpg` again (styles from tarot-table on); each style was checked one by one earlier.
 - Known weak frame 0 under a strict reading: `embossed` (t = 0 and 4.5 mostly blank paper) and `frosted-pane` (t = 0 mist only).
