@@ -3,6 +3,27 @@
 Audience: an implementing agent (Opus or Sonnet) in a fresh session. Read this file fully before you write code.
 Owner: the repository owner. Windows 11, PowerShell and Git Bash.
 
+## 0. Resume point (read first; verified 2026-11-13)
+
+**Status: all phases done.** Sections 1 to 12 are the design spec (written by Claude Fable 5.2, session `fa936852`). Section 13 is the build log (Claude Opus 5.5, session `037ffe74`). There is no `CLAUDE.md` in this project; the owner's global rules apply.
+
+Current state:
+- 100 of 100 styles built in `atlas/`; 100 posters; `node atlas/tools/test.mjs`: 2438 passed, 0 failed.
+- Repository: <https://github.com/az9713/fable-5.2-3d-animations> (public). Branch `main`; local HEAD = remote HEAD = the commit that adds this section (check with `git ls-remote origin main`). Earlier commits: `ee3b394` (all files), `ed089fb` (README video title).
+- Live app (GitHub Pages, source = `main` branch root, `.nojekyll`): <https://az9713.github.io/fable-5.2-3d-animations/atlas/>. On 2026-11-13 the gallery showed all posters and `player.html?style=signal-glitch` rendered. The site root URL (without `atlas/`) returns 404, by choice.
+- Kept out of git by `.gitignore`: `reference/` (video screenshots), `.ignore/` (session transcripts), `README.txt` (owner notes). Do not publish them. The owner's name was replaced by "the owner" in this file.
+- Last fix: `atlas/index.html` line 33 `.pv .ph[hidden] { display:none; }`. Before it, the placeholder covered every poster.
+
+Next task (none is open; do only what the owner asks). Possible items:
+- The owner checks **Record WebM** in a normal foreground browser (not yet tested).
+- Optional: read `pass/26.jpg`–`34.jpg` again (styles from tarot-table on); each style was checked one by one earlier.
+- Known weak frame 0 under a strict reading: `embossed` (t = 0 and 4.5 mostly blank paper) and `frosted-pane` (t = 0 mist only).
+- Optional: a root redirect page to `atlas/`.
+
+Rules that still apply: three.js core only, no build step, no npm; kill only a PID you started; no subagents without the owner's approval; report in ASD-STE100.
+
+Session-transient scripts (scratchpad of session `037ffe74`; gone after the session; durable record = the committed files): `check.mjs` (per-style sheets, see section 13), `sync.mjs` (style fields to `manifest.js`), `pass.mjs` (all styles at t = 0, D/2, D − 0.5 in its own headless Chrome on port 9334, errors + determinism, montage pages), `models.mjs` (reads `~/.claude/projects/<project>/*.jsonl`, counts `message.model` per assistant turn and `Write`/`Edit` targets; gave the model table in `README.md`). Rebuild one from this description if needed.
+
 ## 1. Goal
 
 Build a local web app, the **3D Style Atlas**: a library of 100 three.js animation styles.
@@ -680,3 +701,5 @@ Done styles (id: check result):
 - posters: 100 of 100 in atlas/posters/. tools/test.mjs: 2438 passed, 0 failed.
 - README: atlas/README.md (serve, use, player, add a style, headless still command without flags).
 - pass at t = 0, D/2, D - 0.5 for all 100: scratchpad pass.mjs (montage pages pass/NN.jpg, summary.json).
+- Gallery fix: `.pv .ph[hidden] { display:none; }` in atlas/index.html; posters were covered by the placeholder.
+- Published: github.com/az9713/fable-5.2-3d-animations, GitHub Pages from main root (commits ee3b394, ed089fb). Root README.md names the source video and the model credits.
