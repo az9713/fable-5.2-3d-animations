@@ -294,8 +294,8 @@ K.run = async (canvas, style, opts = {}) => {
   S.setCues(opts.cues);
 
   // Render path: direct to screen, or through targets for the post pass and for sub-frame samples.
-  const post = art ? art.post : style.post, sz = [W * scale, H * scale], xs = art && art.x; // xs = {n, still?, span, mode: 'avg'|'max'|'diff'}
-  let rtScene, rtAcc, rtNorm, quad, quadScene, ortho, copyMat, finalMat, normMat;
+  const post = art ? art.post : style.post, sz = [W * scale, H * scale], xs = art && art.x; // xs = {n, still?, span, mode: 'avg'|'max'|'diff'|'echo'}
+  let rtScene, rtAcc, rtLive, depthMat, echoMat, rtNorm, quad, quadScene, ortho, copyMat, finalMat, normMat;
   const ensureTargets = () => {
     if (rtScene) return;
     rtScene = S.own(new T.WebGLRenderTarget(...sz, { type: T.HalfFloatType, samples: 4, depthTexture: new T.DepthTexture(...sz) }));
@@ -308,6 +308,14 @@ K.run = async (canvas, style, opts = {}) => {
     copyMat = S.own(new T.ShaderMaterial({ vertexShader: VERT, transparent: true, blending: T.AdditiveBlending, depthTest: false, depthWrite: false, toneMapped: false,
       uniforms: { tex: { value: null }, w: { value: 1 } },
       fragmentShader: 'uniform sampler2D tex; uniform float w; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(tex, vUv).rgb, w); }' }));
+    if (xs && xs.mode === 'echo') { // earlier renders, kept only where they are nearer than the live render: tColor = (sum of their colours, count)
+      rtLive = S.own(new T.WebGLRenderTarget(...sz, { type: T.HalfFloatType }));
+      const lin = 'float z = texture2D(tD, vUv).x * 2.0 - 1.0, d = 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear));';
+      const mk = (frag, uni, extra) => S.own(new T.ShaderMaterial(Object.assign({ vertexShader: VERT, depthTest: false, depthWrite: false, toneMapped: false, fragmentShader: 'uniform sampler2D tD, tex, tL; uniform float uNear, uFar; varying vec2 vUv; void main(){ ' + lin + frag + ' }',
+        uniforms: Object.assign({ tD: { value: null }, tex: { value: null }, tL: { value: null }, uNear: { value: 0.1 }, uFar: { value: 500 } }, uni) }, extra)));
+      depthMat = mk('gl_FragColor = vec4(d, 0.0, 0.0, 1.0);', {}, {});
+      echoMat = mk('gl_FragColor = vec4(texture2D(tex, vUv).rgb, step(d, texture2D(tL, vUv).x * 0.993));', {}, { transparent: true, blending: T.AdditiveBlending });
+    }
     if (xs && xs.mode === 'max') Object.assign(copyMat, { blending: T.CustomBlending, blendEquation: T.MaxEquation, blendSrc: T.OneFactor, blendDst: T.OneFactor });
     // Extra inputs for art styles only: W world position, B beat times and canonical time, tPrev for X 'diff', uFocus = distance to the look target.
     const artHead = art ? 'uniform sampler2D tPrev, tCur; uniform float uXn; uniform mat4 uProjInv, uViewInv; uniform float uCanon, uFocus, uDur, uRealT, uBeats[8]; uniform int uBeatN;\n' +
@@ -376,12 +384,23 @@ K.run = async (canvas, style, opts = {}) => {
     const timeAt = i => xs ? Math.max(0, tf - (mode === 'diff' ? (1 - i) * xs.span : xs.span * (n - 1 - i) / n)) : tf + (n > 1 ? (i / n) * shutter : 0);
     let pose = null; // X with fixCamera: the camera keeps its pose at tf in every render (a tripod)
     if (xs && xs.fixCamera) { apply(tf); pose = [camera.position.clone(), camera.quaternion.clone(), camera.fov]; }
-    for (let i = 0; i < Math.max(1, n); i++) {
+    // echo: the live render first (its depth is kept), then the earlier ones, then the live render again so depth, normals and tCur are the live frame
+    const seq = mode === 'echo' ? [n - 1, ...Array.from({ length: n - 1 }, (_, i) => i), n - 1] : Array.from({ length: Math.max(1, n) }, (_, i) => i);
+    const pass = (mat, tgt) => { quad.material = mat; renderer.setRenderTarget(tgt); const ac = renderer.autoClear; renderer.autoClear = tgt === rtLive; renderer.render(quadScene, ortho); renderer.autoClear = ac; };
+    for (let q = 0; q < seq.length; q++) {
+      const i = seq[q];
       apply(timeAt(i));
       if (pose) { camera.position.copy(pose[0]); camera.quaternion.copy(pose[1]); if (camera.fov !== pose[2]) { camera.fov = pose[2]; camera.updateProjectionMatrix(); } }
       if (n > 1 && !xs) jitterDof(i);
       renderer.setRenderTarget(rtScene); renderer.render(scene, camera);
-      if (n > 1 && (mode !== 'diff' || i === 0)) {
+      if (mode === 'echo' && q < seq.length - 1) {
+        for (const m of [depthMat, echoMat]) { m.uniforms.tD.value = rtScene.depthTexture; m.uniforms.tex.value = rtScene.texture; m.uniforms.tL.value = rtLive.texture; m.uniforms.uNear.value = camera.near; m.uniforms.uFar.value = camera.far; }
+        if (q === 0) {
+          pass(depthMat, rtLive);
+          const cc = renderer.getClearColor(new T.Color()), ca = renderer.getClearAlpha();
+          renderer.setRenderTarget(rtAcc); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.setClearColor(cc, ca);
+        } else pass(echoMat, rtAcc);
+      } else if (mode !== 'echo' && n > 1 && (mode !== 'diff' || i === 0)) {
         copyMat.uniforms.tex.value = rtScene.texture; copyMat.uniforms.w.value = mode === 'avg' ? 1 / n : 1;
         quad.material = copyMat; renderer.setRenderTarget(rtAcc);
         if (i === 0) { // the scene background sets the clear colour; the sum must start from black
