@@ -337,9 +337,25 @@ K.run = async (canvas, style, opts = {}) => {
     camera.position.addScaledVector(right, Math.cos(a) * r).addScaledVector(up, Math.sin(a) * r);
     camera.lookAt(focus);
   };
+  // art.labels = 'halo' | 'light' | 'dark': an outline around the glyphs, in the opposite tone of the text ('halo') or a fixed tone. Default: none.
+  const haloLabel = o => {
+    const m = o.material, dark = art.labels === 'dark' ? 1 : art.labels === 'light' ? 0 : -1;
+    o.userData.halo = true; m.transparent = true; m.alphaTest = 0;
+    K.patchMaterial(m, sh => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', `
+        vec2 hpx = 4.0 / vec2(textureSize(map, 0)); float hA = 0.0; vec3 hC = vec3(0.0);
+        for (int i = 0; i < 12; i++) { float ha = float(i) * 0.5236; vec4 hT = texture2D(map, vMapUv + vec2(cos(ha), sin(ha)) * hpx); if (hT.a > hA) { hA = hT.a; hC = hT.rgb; } }
+        float hDark = ${dark < 0 ? 'step(0.5, dot(hC, vec3(0.333)))' : dark.toFixed(1)};
+        outgoingLight = mix(vec3(mix(0.96, 0.03, hDark)), outgoingLight, diffuseColor.a);
+        diffuseColor.a = max(diffuseColor.a, hA * 0.92);
+        #include <opaque_fragment>`);
+    });
+  };
   const apply = (real) => {
     update(warp.toCanonical(real), real);
-    if (art) scene.traverse(o => { if (o.userData.isLabel) o.layers.set(1); else if (o.isLight) o.layers.enable(1); }); // labels live on layer 1: drawn only by the label pass
+    if (art) scene.traverse(o => { // labels live on layer 1: drawn only by the label pass
+      if (o.userData.isLabel) { o.layers.set(1); if (art.labels && !o.userData.halo) haloLabel(o); } else if (o.isLight) o.layers.enable(1);
+    });
   };
   // Labels: drawn after the post shader, on top of the art, without occlusion. Shadow maps from the main pass stay valid for lit labels.
   const labelPass = () => {
