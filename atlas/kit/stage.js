@@ -310,7 +310,7 @@ K.run = async (canvas, style, opts = {}) => {
       fragmentShader: 'uniform sampler2D tex; uniform float w; varying vec2 vUv; void main(){ gl_FragColor = vec4(texture2D(tex, vUv).rgb, w); }' }));
     if (xs && xs.mode === 'max') Object.assign(copyMat, { blending: T.CustomBlending, blendEquation: T.MaxEquation, blendSrc: T.OneFactor, blendDst: T.OneFactor });
     // Extra inputs for art styles only: W world position, B beat times and canonical time, tPrev for X 'diff', uFocus = distance to the look target.
-    const artHead = art ? 'uniform sampler2D tPrev; uniform mat4 uProjInv, uViewInv; uniform float uCanon, uFocus, uBeats[8]; uniform int uBeatN;\n' +
+    const artHead = art ? 'uniform sampler2D tPrev; uniform mat4 uProjInv, uViewInv; uniform float uCanon, uFocus, uDur, uRealT, uBeats[8]; uniform int uBeatN;\n' +
       'vec3 worldPos(vec2 uv){ vec4 c = uProjInv * vec4(uv * 2.0 - 1.0, texture2D(tDepth, uv).x * 2.0 - 1.0, 1.0); return (uViewInv * vec4(c.xyz / c.w, 1.0)).xyz; }\n' +
       'vec3 worldNormal(vec2 uv){ return normalize(mat3(uViewInv) * (texture2D(tNormal, uv).rgb * 2.0 - 1.0)); }\n' +
       'float beatIdx(){ float k = -1.0; for (int i = 0; i < 8; i++) if (i < uBeatN && uCanon >= uBeats[i]) k = float(i); return k; }\n' +
@@ -320,7 +320,7 @@ K.run = async (canvas, style, opts = {}) => {
     finalMat = S.own(new T.ShaderMaterial({ vertexShader: VERT, depthTest: false, depthWrite: false,
       uniforms: Object.assign({ tColor: { value: null }, tDepth: { value: null }, tNormal: { value: null }, uRes: { value: new T.Vector2(...sz) },
         uTime: { value: 0 }, uNear: { value: 0.1 }, uFar: { value: 500 } },
-        art ? { tPrev: { value: null }, uProjInv: { value: new T.Matrix4() }, uViewInv: { value: new T.Matrix4() }, uCanon: { value: 0 }, uFocus: { value: 1 },
+        art ? { tPrev: { value: null }, uProjInv: { value: new T.Matrix4() }, uViewInv: { value: new T.Matrix4() }, uCanon: { value: 0 }, uFocus: { value: 1 }, uDur: { value: 1 }, uRealT: { value: 0 },
           uBeats: { value: S.beats.map(b => b.t).concat(Array(8).fill(1e9)).slice(0, 8) }, uBeatN: { value: Math.min(8, S.beats.length) } } : {}, post ? post.uniforms || {} : {}),
       // post.fragment defines vec4 postFX(vec2 uv) and returns linear colour; tone mapping and sRGB happen once, here.
       fragmentShader: head + (post ? post.fragment : 'vec4 postFX(vec2 uv){ return texture2D(tColor, uv); }') +
@@ -397,7 +397,7 @@ K.run = async (canvas, style, opts = {}) => {
     u.tNormal.value = rtNorm ? rtNorm.texture : null; u.uTime.value = tf; u.uNear.value = camera.near; u.uFar.value = camera.far;
     if (art) {
       const look = camera.userData.look || new T.Vector3();
-      u.tPrev.value = mode === 'diff' ? rtAcc.texture : null; u.uCanon.value = warp.toCanonical(tf); u.uFocus.value = camera.position.distanceTo(look);
+      u.tPrev.value = mode === 'diff' ? rtAcc.texture : null; u.uCanon.value = warp.toCanonical(tf); u.uDur.value = S.duration; u.uRealT.value = t; u.uFocus.value = camera.position.distanceTo(look);
       u.uProjInv.value.copy(camera.projectionMatrixInverse); u.uViewInv.value.copy(camera.matrixWorld);
     }
     quad.material = finalMat; renderer.setRenderTarget(null); renderer.render(quadScene, ortho);
