@@ -4,6 +4,8 @@
 
 **The 100 art styles: <https://az9713.github.io/fable-5.2-3d-animations/atlas/art.html>**
 
+**The formula of each art style: <https://az9713.github.io/fable-5.2-3d-animations/art-styles-math.html>**
+
 A library of 100 animation styles in 13 families, built only in code with three.js: no models, no images, no texture files. Each card plays a short sample with sound. Type your topic, click **Copy prompt**, and paste the prompt into Claude. The prompt gives Claude the style source, the rendering kit and the sound kit, so that Claude can rebuild the style for your subject.
 
 [![The gallery](atlas/posters/soft-clay.jpg)](https://az9713.github.io/fable-5.2-3d-animations/atlas/)
