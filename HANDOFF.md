@@ -810,3 +810,18 @@ Contact sheets: `atlas/art-out/sheets/<art>__<scene>.jpg`.
 - `node atlas/tools/test.mjs`: 2459 passed, 0 failed (was 2438; the 21 new checks cover the art manifest and the 5 art files). Largest prompt: 69,271 characters (was 64,554). Limit: 120,000.
 - Old paths: frames of scenes with no art were compared with frames saved from the unchanged kit. Scenes: `tiny-diorama`, `exploded-view`, `floating-screens`, `toy-blocks`, `evidence-board` (`post: null`), `pencil-sketch` (post pass), and a `samples=8` still of `tiny-diorama`. Result: 0 pixels differ by more than 6 levels, except 1 pixel on `pencil-sketch` at t = 0. The unchanged kit gave the same kind of noise against its own saved frames.
 - X modes `max` and `diff` ran with no GL error (a smoke test with a temporary art object). Their look is not judged.
+
+### 14.8 Art field `labels` (label contrast)
+
+- `ARTS[id].labels = 'halo' | 'light' | 'dark'`. Default: not set, and the label pass is as before.
+- Effect: the label pass puts a soft outline (about 4 texels of the label texture, alpha 0.92) around the glyphs of each `K.label`. `'halo'`: the outline is dark for light text and light for dark text. `'light'` and `'dark'`: a fixed tone.
+- Labels with a solid background (pills) change only at their edge. Set in `stage.js` as `haloLabel` (about lines 340-352), run once for each label.
+- Checked: a test art object over `tiny-diorama` on a dark striped backdrop (title and pills read well). No art file uses the field yet.
+
+### 14.9 Art uniforms `uDur`, `uRealT`
+
+- `uDur`: `S.duration` (real duration, with the voiceover warp). `uRealT`: the real time without the frame step. `uTime` is the stepped time `tf` when `art.fps` is set. Both uniforms exist only with an art style.
+
+### 14.10 X inputs `tCur`, `uXn`
+
+- With an art style the shader gets `tCur` (the live render at `tf`, also in `avg` and `max` modes) and `uXn` (the number of renders). The mean of the earlier renders in `avg` mode is `(uXn * tColor - tCur) / (uXn - 1)`. `motion-echoes.js` uses it; its scene hook is removed.
