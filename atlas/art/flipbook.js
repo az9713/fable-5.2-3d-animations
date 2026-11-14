@@ -1,6 +1,6 @@
 // Art style 58: Flipbook. Inputs C S (colour, frame step).
 // Pencil frames on a pad at 8 frames per second: graphite outlines and hatching drawn again on each frame, a binding at the left, paper that shows faint lines of the page below.
-// A page curl crosses the frame, one position for each frame, from the right to the left in a cycle of 4 frames (a stepped time has no time inside a frame).
+// A page curl crosses the frame, moving smoothly from the right to the left (uRealT, the unstepped time), one crossing every 0.5 s.
 window.ARTS = window.ARTS || {};
 ARTS['flipbook'] = {
   id: 'flipbook', name: 'Flipbook', group: 'Hand-made animation', inputs: 'C S',
@@ -51,8 +51,7 @@ ARTS['flipbook'] = {
         for (int k = 0; k < 3; k++) below += pencil(uv0 + hand + vec2(float(k) - 1.0, 1.0 - float(k)) * 1.5 * px + vec2(22.0, -14.0) * px, fi + 1.0);
         pg = mix(pg, vec3(0.45, 0.47, 0.55), clamp(below / 3.0 * 0.16, 0.0, 0.16));
         // page curl: fold line at u = fp, slanted; fp moves from the right to the left, 4 frames for one crossing
-        float cyc = mod(fi, 4.0);
-        float fp = 0.96 - 0.28 * cyc;
+        float fp = 1.12 - 1.2 * fract(uRealT * 2.0);                         // unstepped time: the curl moves smoothly, one crossing every 0.5 s
         float u = uv0.x + 0.2 * (uv0.y - 0.5);
         float cw = 0.05;
         vec3 col = pg;
