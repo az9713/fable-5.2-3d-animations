@@ -725,3 +725,88 @@ Done styles (id: check result):
 - pass at t = 0, D/2, D - 0.5 for all 100: scratchpad pass.mjs (montage pages pass/NN.jpg, summary.json).
 - Gallery fix: `.pv .ph[hidden] { display:none; }` in atlas/index.html; posters were covered by the placeholder.
 - Published: github.com/az9713/fable-5.2-3d-animations, GitHub Pages from main root (commits ee3b394, ed089fb). Root README.md names the source video and the model credits.
+
+## 14. Art styles (second set)
+
+Phase 1 is done (2026-11-13). The kit, the contract, the check tool and 5 pilot styles exist. Stop here for the owner's review.
+
+### 14.1 Idea
+
+An animation is a scene plus an art style. The scene is one of the 100 first-set styles whose `post` is `null`. The art style draws it. `K.run` refuses an art style on a scene that has its own `post`.
+
+### 14.2 File contract
+
+- One file per art style: `atlas/art/<id>.js`. Classic script. `<id>` is the kebab-case name from `atlas/art/manifest.js`.
+- `atlas/art/manifest.js` defines `ART_LIST`: 100 rows `{n, id, name, group, inputs, kind, source?}` in plan order. `kind` is `keep`, `new` or `ver`. `source` is the first-set id of a `ver` row. The rows come from the list `G` in `art-styles-plan-v2.html`.
+- The file registers `ARTS[id] = { id, name, group, inputs, post, material?, fps?, x? }`.
+  - `id`, `name`, `group`, `inputs` must equal the manifest row. `tools/test.mjs` checks this.
+  - `post = { fragment, uniforms?, normals? }`. `fragment` defines `vec4 postFX(vec2 uv)` and returns linear colour. The first-set rules still apply: tone mapping runs after it, so paper white needs about x2.2; posterise in gamma space.
+  - `material(m, mesh, S)` (input M): the kit calls it once for each material of each non-label mesh, after `build`. Change `m` in place. Do not replace it: scene `update` functions write to the old object. Use `K.patchMaterial(m, shader => {...})` to edit the shader source.
+  - `fps` (input S): the time given to `update` and to the shader is rounded down to a multiple of `1/fps`.
+  - `x = { n, still?, span, mode: 'avg'|'max'|'diff', fixCamera? }` (input X): see 14.3.
+- Rules: no `Math.random`, `Date` or timers; no memory from the frame before; no image files. A shader uses only the inputs of 14.3.
+- Player: `player.html?style=<sceneId>&art=<artId>&t=..&still=1`. The player loads `art/manifest.js` and `art/<id>.js`. `index.html` is unchanged.
+
+### 14.3 Kit added (`atlas/kit/stage.js`, 402 lines; was 355)
+
+All additions apply only when an art style is set. With no art style the render path is as before (14.7). Line numbers are approximate.
+
+| Input | What the shader gets | Where |
+|---|---|---|
+| W | `worldPos(uv)`, `worldNormal(uv)` (needs `normals: true`), uniforms `uProjInv`, `uViewInv` | head `stage.js:312-317`, uniforms `:322-324`, set `:378-384` |
+| B | `uCanon` (canonical time), `uBeats[8]`, `uBeatN`, `beatIdx()` (last beat, -1 before the first), `beatAge()` (seconds since the last beat) | same lines |
+| S | `art.fps`: `tf = floor(t * fps + 1e-4) / fps`. `uTime` is `tf` | `:353` |
+| M | `art.material` hook, and `K.patchMaterial` | `:252-259`, `:286-289` |
+| X | `art.x`: n renders at times in `[tf - span, tf]`. The last one is `tf`, so depth, normals and camera belong to the frame. `avg` (weights 1/n), `max` (max blend), `diff` (`tColor` = frame at `tf`, `tPrev` = frame at `tf - span`). `fixCamera` keeps the camera pose of `tf` in all renders. `n` is for live play; `still` is used when `samples > 1`. Times are clamped to 0. | `:297`, `:311`, `:354-370` |
+| labels | `K.label` sets `mesh.userData.isLabel` (`:135`). With an art style, label meshes move to camera layer 1 and lights get layers 0 and 1 (`:340-343`). The main pass and the normal pass do not draw them. `labelPass` (`:345-350`) draws them over the finished picture. | |
+| depth scale | `uFocus`: distance from the camera to `camera.userData.look` (to the origin if none). Use it to make a depth range that fits the scene. | `:382` |
+
+Limits to know:
+- A label is never hidden by scene geometry (the label pass clears depth). A label with `depthTest` that stood behind an object now shows through. Text that is not made by `K.label` is filtered by the art style like any surface.
+- Lit labels use the shadow maps of the main pass. Nothing else shadows a label in the label pass.
+- Materials made after `build` (inside `update`) are not offered to `material`.
+- `uBeats` holds 8 beats at most. Scenes have 3 to 5.
+- Live Long exposure uses `x.n` = 10 renders. Fast parts show as separate copies. Stills use `x.still` = 48.
+
+### 14.4 Check tool: `node atlas/tools/art.mjs`
+
+No dependencies. It serves `atlas/` from its own Node process. It starts its own headless Chrome (GPU on, `--remote-debugging-port=0`) and kills only the Chrome PID that it started. It finds Chrome in the standard install folders; set `CHROME` to override.
+
+```
+node atlas/tools/art.mjs <artId|none> --scenes tiny-diorama,floating-screens --times 0,b1+0.2,b1+1.8,mid,end [--fps] [--q] [--full] [--crop x,y,w,h] [--out name] [--ref save|cmp]
+```
+- Times: a number, `mid` (D/2), `end` (D - 0.5), `b<i>` or `b<i>+0.2` (beat i, plus an offset).
+- Output: `atlas/art-out/<out>/<art>__<scene>.jpg` (contact sheet, 640 px cells). `--full` also writes one full-size JPEG for each time (`--crop` cuts it). `atlas/art-out/` is in `.gitignore`. A second run with the same `--out` overwrites the files.
+- Reports: the GPU name; console errors; determinism (the same frame twice with another frame between; pixels that differ by more than 6 levels); one-frame time (10 `seek` calls, each followed by a 1-pixel `readPixels`); with `--fps` the live frames per second in the real player (4 s of `requestAnimationFrame`, 1920 x 1080, `samples=1`).
+- `--q` renders with `samples=8` (X styles then use `x.still`).
+- `none --ref save`, then `none --ref cmp` after a kit change, compares frames of unchanged scenes with saved lossless copies. Noise between runs: up to 1 pixel that differs by more than 6 levels (text drawing), and up to 107 pixels that are not identical.
+- Env `ART_EVAL`: a JS expression that runs in the page after the checks. Example: `__A.same(1.01, 1.05)` counts the pixels that differ between two times.
+
+### 14.5 The 2 test scenes
+
+- `tiny-diorama`: strong forms and depth, an orbiting camera, a moving van, a stroked HUD title, flag labels in the scene (3 `K.label`, 1 lit).
+- `floating-screens`: flat UI cards with canvas-texture text, a window, a plant, number badges and a title. It tests flat surfaces and legibility.
+- Also used in a smoke test: `marble-run` (fast small parts, for Long exposure).
+- Rule for later groups: the scene must have `post: null`. Text that must stay legible must be `K.label`.
+
+### 14.6 Pilot results
+
+All 5 were rendered and read on both scenes. GPU: NVIDIA GeForce RTX 3050 Laptop. For each style on each scene: 0 console errors, 0 pixels over 6 levels in the determinism check.
+
+| Style | Match with the plan row | One frame (ms) / live fps |
+|---|---|---|
+| 1 Wet watercolor (C D B) | Partly. Wet frames: colour bleeds over the edges (depth-aware wash). Dry frames: paper grain, wobbly edges, soft dark rim. Off: dry colours are pale and the rim is weak. At a beat on `floating-screens` the white cards nearly vanish. | 6 to 14 ms / 138 to 144 fps |
+| 11 Banknote engraving (C N W) | Yes. Parallel lines in world space bend around forms, width follows the tone, a cross layer in the darkest tones, an outline, a guilloche background. Off: lit flat ground shows almost no line (lines at a grazing angle are smaller than a pixel and average to grey). | 5 to 11 ms / 142 to 144 fps |
+| 21 Paper-cut light box (D) | Partly. 8 sheets with white cut edges, shadow on the sheet behind, warm glow on far sheets, an amber lamp behind. Off: the sheet range (0.8 to 1.3 times `uFocus`) fits `tiny-diorama`; on flat `floating-screens` only 2 to 3 sheets show. | 5 to 13 ms / 142 to 144 fps |
+| 51 Cel animation (C D M S) | Yes. Two flat tones (material hook), ink line (wide on silhouettes, thin on creases) that moves a little on each drawing, a flat cel shadow. Two times in one 1/12 s window give 0 differing pixels; two windows give 180,105. Off: most faces take the light tone. | 6 to 21 ms / 138 to 144 fps |
+| 100 Long exposure (X) | Yes in stills (`--q`, 48 renders): smooth trails, sharp rails and labels. Partly in live play (10 renders): fast parts such as marbles show as separate copies. | 19 to 46 ms / 24 to 81 fps |
+
+Decision 6 (stop if live play is below 15 fps): the lowest Long exposure reading is 23.8 fps (`tiny-diorama`, first run); later runs gave 44 and 48 fps. Above 15. The other 4 styles run at the 144 fps display limit.
+
+Contact sheets: `atlas/art-out/sheets/<art>__<scene>.jpg`.
+
+### 14.7 Checks of the kit change
+
+- `node atlas/tools/test.mjs`: 2459 passed, 0 failed (was 2438; the 21 new checks cover the art manifest and the 5 art files). Largest prompt: 69,271 characters (was 64,554). Limit: 120,000.
+- Old paths: frames of scenes with no art were compared with frames saved from the unchanged kit. Scenes: `tiny-diorama`, `exploded-view`, `floating-screens`, `toy-blocks`, `evidence-board` (`post: null`), `pencil-sketch` (post pass), and a `samples=8` still of `tiny-diorama`. Result: 0 pixels differ by more than 6 levels, except 1 pixel on `pencil-sketch` at t = 0. The unchanged kit gave the same kind of noise against its own saved frames.
+- X modes `max` and `diff` ran with no GL error (a smoke test with a temporary art object). Their look is not judged.
